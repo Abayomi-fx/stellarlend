@@ -127,9 +127,9 @@ pub enum BorrowDataKey {
     /// Stable rate premium in basis points
     StableRatePremiumBps,
     /// Stable rate recalculation interval in seconds
-    StableRateRecalcIntervalSecs,
-    /// Switch fee in basis points applied when switching rate types
-    RateSwitchFeeBps,
+    StableRateRecalcInterval,
+    /// Transaction-scoped oracle price cache. Never persists across ledgers.
+    OraclePriceCache(Address),
 }
 
 /// Dynamic stablecoin configuration.
@@ -742,11 +742,21 @@ pub(crate) fn calculate_interest(env: &Env, position: &DebtPosition) -> Result<i
 }
 
 fn get_asset_price(env: &Env, oracle: &Address, asset: &Address) -> i128 {
-    env.invoke_contract(
+    let cache_key = BorrowDataKey::OraclePriceCache(asset.clone());
+    let now = env.ledger().timestamp();
+    if let Some((cached_at, cached_price)) = env.storage().temporary().get(&cache_key) {
+        if cached_at == now {
+            return cached_price;
+        }
+    }
+
+    let price: i128 = env.invoke_contract(
         oracle,
         &Symbol::new(env, "price"),
         (asset.clone(),).into_val(env),
-    )
+    );
+    env.storage().temporary().set(&cache_key, &(now, price));
+    price
 }
 
 fn get_debt_position(
@@ -803,6 +813,14 @@ fn save_debt_position(env: &Env, user: &Address, position: &DebtPosition) {
 }
 
 fn update_compat_user_debt(env: &Env, user: &Address) {
+    // New positions use the variable/stable keys directly. Keep writing the
+    // legacy compatibility key only when it already exists, so new positions
+    // avoid a redundant persistent write while old deployments remain readable.
+    let legacy_key = BorrowDataKey::BorrowUserDebt(user.clone());
+    if !env.storage().persistent().has(&legacy_key) {
+        return;
+    }
+
     let v = env
         .storage()
         .persistent()
@@ -823,13 +841,11 @@ fn update_compat_user_debt(env: &Env, user: &Address) {
     };
 
     if let Some(pos) = chosen {
-        env.storage()
-            .persistent()
-            .set(&BorrowDataKey::BorrowUserDebt(user.clone()), &pos);
+        env.storage().persistent().set(&legacy_key, &pos);
     } else {
         // Ensure legacy key is cleared to an empty variable position
         env.storage().persistent().set(
-            &BorrowDataKey::BorrowUserDebt(user.clone()),
+            &legacy_key,
             &DebtPosition {
                 borrowed_amount: 0,
                 interest_accrued: 0,
