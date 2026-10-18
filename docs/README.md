@@ -49,6 +49,7 @@ protocol terms and the fixed-point conventions used across these documents.
 - Upgrade tracking and approval manager in `contracts/lending`; see `upgrade-mechanism.md` for current scope and limitations
 - Data management: generic data store, backup/restore, migration
 - Configuration: versioned param store with backup/restore
+- **[Contract Integration Guide](CONTRACT_INTEGRATION.md)** - connect through the SDK and implement the deposit/borrow/repay/withdraw, liquidation and flash-loan flows
 
 ## Admin Operations
 Key admin entrypoints (see contract for full list):
