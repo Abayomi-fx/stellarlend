@@ -10,6 +10,7 @@ export enum ErrorCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE',
   UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
   NOT_FOUND = 'NOT_FOUND',
   CONFLICT = 'CONFLICT',
   RATE_LIMITED = 'RATE_LIMITED',
@@ -69,6 +70,13 @@ export class UnauthorizedError extends ApiError {
   constructor(message = 'Unauthorized') {
     super(401, message, ErrorCode.UNAUTHORIZED);
     Object.setPrototypeOf(this, UnauthorizedError.prototype);
+  }
+}
+
+export class ForbiddenError extends ApiError {
+  constructor(message = 'Forbidden') {
+    super(403, message, ErrorCode.FORBIDDEN);
+    Object.setPrototypeOf(this, ForbiddenError.prototype);
   }
 }
 
