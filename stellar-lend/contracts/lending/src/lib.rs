@@ -329,28 +329,17 @@ impl LendingContract {
         Ok(())
     }
 
-    /// Install, change or disable the utilization circuit breaker (admin only).
+    /// Immediately pause or resume every state-changing protocol operation.
     ///
-    /// See [`utilization_breaker`] for semantics. Pass `enabled = false` to lift throttling.
-    pub fn set_utilization_breaker(
+    /// This is the emergency control surface. It is restricted to the
+    /// configured admin and delegates to the same guarded pause storage used
+    /// by the granular operation controls.
+    pub fn emergency_pause(
         env: Env,
         admin: Address,
-        config: UtilizationBreakerConfig,
-    ) -> Result<(), UtilizationBreakerError> {
-        utilization_breaker::set_config(&env, admin, config)
-    }
-
-    /// Clear a tripped utilization breaker without changing its configuration (admin only).
-    pub fn reset_utilization_breaker(
-        env: Env,
-        admin: Address,
-    ) -> Result<(), UtilizationBreakerError> {
-        utilization_breaker::manual_reset(&env, admin)
-    }
-
-    /// Current breaker configuration, trip latch and protocol utilization.
-    pub fn get_utilization_breaker(env: Env) -> UtilizationBreakerStatus {
-        utilization_breaker::get_status(&env)
+        paused: bool,
+    ) -> Result<(), BorrowError> {
+        Self::set_pause(env, admin, PauseType::All, paused)
     }
 
     /// Repay borrowed assets
