@@ -1,0 +1,18 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "fix/issue-1411-add-emergency-shutdown-of-an-asset",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "fix/issue-1411-add-emergency-shutdown-of-an-asset": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "fix/issue-1411-add-emergency-shutdown-of-an-asset",
+    "origin"
+  ]
+}
